@@ -14,12 +14,6 @@ const LPCWSTR const VIDEOpass(L"C:\\Downloads\\munou.mp4");
 
 
 
-// Unicode•¶ŽšƒZƒbƒg
-#pragma comment(lib, "strmiids.lib")
-
-#include <DShow.h>
-#include <evr.h>
-
 #define SAFE_RELEASE(x) { if (x) { x->Release(); x = NULL; } }
 const LPCWSTR const CLASSname(L"DirectShow_EVR");
 const LPCWSTR const WINDOWname(L"DirectShow_EVR");
