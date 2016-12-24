@@ -138,12 +138,24 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EVR_Video_Experiment.h" />
+    <ClInclude Include="helpers.h">
+      <SubType>
+      </SubType>
+    </ClInclude>
     <ClInclude Include="Resource.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EVR_Video_Experiment.cpp" />
+    <ClCompile Include="GUID.cpp">
+      <SubType>
+      </SubType>
+    </ClCompile>
+    <ClCompile Include="helpers.cpp">
+      <SubType>
+      </SubType>
+    </ClCompile>
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

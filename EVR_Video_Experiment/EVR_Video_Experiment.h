@@ -1,9 +1,9 @@
 #pragma once
 #include "stdafx.h"
 #include "resource.h"
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow);
-void FullScreen(HWND hWnd);
-HRESULT OpenFile(HWND hWnd, LPCWSTR pszFile);
-HRESULT InitEvr(HWND hWnd);
-HRESULT SetVideoPos(HWND hWnd, int nMode);
-LRESULT CALLBACK MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+extern int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow);
+extern void FullScreen(HWND hWnd);
+extern HRESULT OpenFile(HWND hWnd, LPCWSTR pszFile);
+extern HRESULT InitEvr(HWND hWnd);
+extern HRESULT SetVideoPos(HWND hWnd, int nMode);
+extern LRESULT CALLBACK MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);

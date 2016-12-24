@@ -4,6 +4,7 @@
 //
 
 #pragma once
+#pragma comment(lib, "strmiids.lib")
 
 #include "targetver.h"
 #include <iostream>
@@ -12,7 +13,6 @@
 #define WIN32_LEAN_AND_MEAN             // Windows ヘッダーから使用されていない部分を除外します。
 // Windows ヘッダー ファイル:
 #include <windows.h>
-
 // C ランタイム ヘッダー ファイル
 #include <stdlib.h>
 #include <malloc.h>
@@ -22,5 +22,4 @@
 #include <evr.h>
 #include <d3d9.h>
 #include <evr9.h>
-
 // TODO: プログラムに必要な追加ヘッダーをここで参照してください

@@ -1,12 +1,12 @@
 #include "stdafx.h"
 #include "EVR_Video_Experiment.h"
-
-
+#include "helpers.h"
+#include "GUID.cpp"
 
 
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
-const LPCWSTR const VIDEOpass(L"C:\\Downloads\\munou.mp4");
+const LPCWSTR const VIDEOpass(L"C:\\Downloads\\sakura2.mkv");
 //↑動画のパスをここに入力して、実行してみよう!('\'はエスケープシーケンスが働いているので注意)
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
@@ -30,9 +30,10 @@ static struct {
 	IGraphBuilder *pGraph;
 	IMediaControl *pControl;
 	IMFVideoDisplayControl *pVideo;
+	ICaptureGraphBuilder2 *pCGB2;
 	SIZE size;
 	int nPlay;
-	int Cusor;
+	int Cusor=0;
 	unsigned int Cusor_time;
 	bool FullScreen_Flag;
 } g;
@@ -145,6 +146,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	hr = g.pControl->Stop();
 	Sleep(1000);
 Exit:
+	SAFE_RELEASE(g.pCGB2);
 	SAFE_RELEASE(g.pEvr);
 	SAFE_RELEASE(g.pVideo);
 	SAFE_RELEASE(g.pControl);
@@ -166,15 +168,62 @@ HRESULT OpenFile(HWND hWnd, LPCWSTR pszFile)
 		hr = g.pGraph->QueryInterface(IID_PPV_ARGS(&g.pControl));
 	}
 
+	if (SUCCEEDED(hr)) {
+		hr = CoCreateInstance(CLSID_CaptureGraphBuilder2, NULL, CLSCTX_INPROC_SERVER, IID_ICaptureGraphBuilder2, (void **)&g.pCGB2);
+	}
+
 	// ビデオの作成
 	if (SUCCEEDED(hr)) {
 
 		hr = InitEvr(hWnd);
 	}
+
 	// グラフを作成する
 	if (SUCCEEDED(hr)) {
-		//Graph(pszFile);
-		hr = g.pGraph->RenderFile(pszFile, NULL);
+		//hr = g.pGraph->RenderFile(pszFile, NULL);
+		IBaseFilter *pSrc = 0, *pDec = 0, *pRawfilter = 0, *pVSFilter = 0;
+		IPin *pSubtitle = 0;
+		GUID CLSID_LAVVideo, CLSID_ffdshow_raw, CLSID_VSFilter, CLSID_MEDIATYPE_Subtitle;
+		hr = g.pGraph->AddSourceFilter(pszFile, pszFile, &pSrc);
+		hr = g.pCGB2->SetFiltergraph(g.pGraph);//キャプチャ グラフ ビルダが使うフィルタ グラフを指定する。(無くても自動作成される)
+
+		GuidFromString(&CLSID_LAVVideo, LAVVideo);
+		hr = AddFilter(g.pGraph, CLSID_LAVVideo, L"LAV Video Decoder", &pDec);
+		GuidFromString(&CLSID_ffdshow_raw, ffdshow_Raw);
+		hr = AddFilter(g.pGraph, CLSID_ffdshow_raw, L"ffdshow raw video filter", &pRawfilter);
+		GuidFromString(&CLSID_VSFilter, VSFilter);
+		hr = AddFilter(g.pGraph, CLSID_VSFilter, L"VSFilter", &pVSFilter);
+
+		hr = g.pCGB2->RenderStream(0, 0, pSrc, 0, pDec);
+		hr = g.pCGB2->RenderStream(0, 0, pDec, 0, pRawfilter);
+		hr = g.pCGB2->RenderStream(0, 0, pRawfilter, 0, pVSFilter);
+		hr = g.pCGB2->RenderStream(0, 0, pVSFilter, 0, g.pEvr);
+
+		//オーディオの接続
+		hr = g.pCGB2->RenderStream(0, &MEDIATYPE_Audio, pSrc, 0, 0);
+
+
+		//字幕の接続
+		GuidFromString(&CLSID_MEDIATYPE_Subtitle, MEDIATYPE_Subtitle);
+		
+		HRESULT hr_SubTitle = g.pCGB2->FindPin(pSrc,
+			PINDIR_OUTPUT,
+			NULL,
+			&CLSID_MEDIATYPE_Subtitle,
+			true,
+			NULL,
+			&pSubtitle
+		);
+
+		if(SUCCEEDED(hr_SubTitle)){
+			hr = g.pCGB2->RenderStream(0, &CLSID_MEDIATYPE_Subtitle, pSrc, 0, pVSFilter);
+		}
+
+		SAFE_RELEASE(pSubtitle);
+		SAFE_RELEASE(pSrc);
+		SAFE_RELEASE(pDec);
+		SAFE_RELEASE(pRawfilter);
+		SAFE_RELEASE(pVSFilter);
 	}
 
 	// 描画領域の設定
@@ -280,7 +329,6 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		break;
 	case WM_CREATE:
 		g.Cusor_time = 1000;
-		g.Cusor=0;
 		break;
 	case WM_MOUSEMOVE:
 		g.Cusor_time = 1000;
