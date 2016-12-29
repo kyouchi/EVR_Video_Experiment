@@ -7,36 +7,36 @@
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 const LPCWSTR const VIDEOpass(L"C:\\Downloads\\sakura2.mkv");
-//Å™ìÆâÊÇÃÉpÉXÇÇ±Ç±Ç…ì¸óÕÇµÇƒÅAé¿çsÇµÇƒÇ›ÇÊÇ§!('\'ÇÕÉGÉXÉPÅ[ÉvÉVÅ[ÉPÉìÉXÇ™ì≠Ç¢ÇƒÇ¢ÇÈÇÃÇ≈íçà”)
+//‚ÜëÂãïÁîª„ÅÆ„Éë„Çπ„Çí„Åì„Åì„Å´ÂÖ•Âäõ„Åó„Å¶„ÄÅÂÆüË°å„Åó„Å¶„Åø„Çà„ÅÜ!('\'„ÅØ„Ç®„Çπ„Ç±„Éº„Éó„Ç∑„Éº„Ç±„É≥„Çπ„ÅåÂÉç„ÅÑ„Å¶„ÅÑ„Çã„ÅÆ„ÅßÊ≥®ÊÑè)
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 
-
-
-
-#define SAFE_RELEASE(x) { if (x) { x->Release(); x = NULL; } }
-const LPCWSTR const CLASSname(L"DirectShow_EVR");
-const LPCWSTR const WINDOWname(L"DirectShow_EVR");
-
-// ä÷êîÉvÉçÉgÉ^ÉCÉvêÈåæ
-HRESULT OpenFile(HWND hWnd, LPCWSTR pszFileName);
-HRESULT InitEvr(HWND hWnd);
-HRESULT SetVideoPos(HWND hWnd, int nMode);
-LRESULT CALLBACK MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-
-// äOïîïœêîç\ë¢ëÃ
+// Â§ñÈÉ®Â§âÊï∞ÊßãÈÄ†‰Ωì
 static struct {
 	IBaseFilter *pEvr;
 	IGraphBuilder *pGraph;
 	IMediaControl *pControl;
+	IMediaSeeking *pSeek;
+	IMediaEventEx *pEvent;
 	IMFVideoDisplayControl *pVideo;
 	ICaptureGraphBuilder2 *pCGB2;
 	SIZE size;
 	int nPlay;
-	int Cusor=0;
+	int Cusor = 0;
 	unsigned int Cusor_time;
 	bool FullScreen_Flag;
 } g;
+
+#define WM_DIRECTSHOWMESSAGE (WM_APP + 1)
+#define SAFE_RELEASE(x) { if (x) { x->Release(); x = NULL; } }
+const LPCWSTR const CLASSname(L"DirectShow_EVR");
+const LPCWSTR const WINDOWname(L"DirectShow_EVR");
+
+// Èñ¢Êï∞„Éó„É≠„Éà„Çø„Ç§„ÉóÂÆ£Ë®Ä
+HRESULT OpenFile(HWND hWnd, LPCWSTR pszFileName);
+HRESULT InitEvr(HWND hWnd);
+HRESULT SetVideoPos(HWND hWnd, int nMode);
+LRESULT CALLBACK MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 //------------------------------------------------------------------------------
 void FullScreen(HWND hWnd)
@@ -45,30 +45,30 @@ void FullScreen(HWND hWnd)
 	RECT rcDst;
 	if(!(g.FullScreen_Flag)){
 		g.FullScreen_Flag = true;
-		// ÉEÉBÉìÉhÉEÉXÉ^ÉCÉãïœçX(ÉÅÉjÉÖÅ[ÉoÅ[Ç»ÇµÅAç≈ëOñ )
+		// „Ç¶„Ç£„É≥„Éâ„Ç¶„Çπ„Çø„Ç§„É´Â§âÊõ¥(„É°„Éã„É•„Éº„Éê„Éº„Å™„Åó„ÄÅÊúÄÂâçÈù¢)
 		SetWindowLongPtr(hWnd, GWL_STYLE, WS_POPUP);
 		SetWindowLongPtr(hWnd, GWL_EXSTYLE, WS_EX_TOPMOST);
 
-		// ç≈ëÂâªÇ∑ÇÈ
+		// ÊúÄÂ§ßÂåñ„Åô„Çã
 		ShowWindow(hWnd, SW_MAXIMIZE);
 
-		// ÉfÉBÉXÉvÉåÉCÉTÉCÉYÇéÊìæ
+		// „Éá„Ç£„Çπ„Éó„É¨„Ç§„Çµ„Ç§„Ç∫„ÇíÂèñÂæó
 		int mainDisplayWidth = GetSystemMetrics(SM_CXSCREEN);
 		int mainDisplayHeight = GetSystemMetrics(SM_CYSCREEN);
 
-		// ÉNÉâÉCÉAÉìÉgóÃàÊÇÉfÉBÉXÉvÉåÅ[Ç…çáÇÌÇπÇÈ
+		// „ÇØ„É©„Ç§„Ç¢„É≥„ÉàÈ†òÂüü„Çí„Éá„Ç£„Çπ„Éó„É¨„Éº„Å´Âêà„Çè„Åõ„Çã
 		SetWindowPos(hWnd, NULL,0, 0, mainDisplayWidth, mainDisplayHeight,SWP_FRAMECHANGED | SWP_NOZORDER | SWP_NOMOVE);
 
 		SetRect(&rcDst, 0, 0, g.size.cx, g.size.cy);
 		GetClientRect(hWnd, &rcDst);
-		//g.pVideo->SetVideoPosition(&mvnr, &rcDst);(ïKóvÇ»Ç¢)
+		//g.pVideo->SetVideoPosition(&mvnr, &rcDst);(ÂøÖË¶Å„Å™„ÅÑ)
 	}
 	else {
 		g.FullScreen_Flag = false;
 		SetWindowLongPtr(hWnd, GWL_STYLE, WS_OVERLAPPEDWINDOW);
 		//SetWindowLongPtr(hWnd, GWL_EXSTYLE, WS_EX_TOPMOST);
 
-		// ïÅí Ç…ñﬂÇ∑
+		// ÊôÆÈÄö„Å´Êàª„Åô
 		ShowWindow(hWnd, SW_RESTORE); 
 		SetVideoPos(hWnd,1);
 	}
@@ -78,30 +78,36 @@ void FullScreen(HWND hWnd)
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	WNDCLASSEX wcx;
-	HWND hWnd;
+	HWND hWnd = 0;
 	MSG msg = { NULL };
-	HRESULT hr;
-	g.FullScreen_Flag = false;//FlagÇÃèâä˙âª
-	// COMÉâÉCÉuÉâÉäÇÃèâä˙âª
+	HRESULT hr = 0;
+
+	BOOL bIsComplete = 0;
+	long lEventCode = 0;
+	LONG_PTR lEvParam1, lEvParam2 = 0;
+	bIsComplete = FALSE;
+
+	g.FullScreen_Flag = false;//Flag„ÅÆÂàùÊúüÂåñ
+	// COM„É©„Ç§„Éñ„É©„É™„ÅÆÂàùÊúüÂåñ
 	hr = CoInitialize(NULL);
 	if (FAILED(hr)) {
 		return 0;
 	}
 
-	// ÉEÉBÉìÉhÉEÉNÉâÉXÇÃìoò^
+	// „Ç¶„Ç£„É≥„Éâ„Ç¶„ÇØ„É©„Çπ„ÅÆÁôªÈå≤
 	ZeroMemory(&wcx, sizeof wcx);
 	wcx.cbSize = sizeof wcx;
 	wcx.style = CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS;
 	wcx.lpfnWndProc = MainWndProc;
 	wcx.hInstance = hInstance;
 	wcx.hCursor = LoadCursor(NULL, MAKEINTRESOURCE(IDC_ARROW));
-	wcx.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);	// çïÇ™Ç¢Ç¢Ç©Ç‡
+	wcx.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);	// Èªí„Åå„ÅÑ„ÅÑ„Åã„ÇÇ
 	wcx.lpszClassName = CLASSname;
 	if (RegisterClassEx(&wcx) == 0) {
 		goto Exit;
 	}
 
-	// ÉEÉBÉìÉhÉEÇÃçÏê¨
+	// „Ç¶„Ç£„É≥„Éâ„Ç¶„ÅÆ‰ΩúÊàê
 	hWnd = CreateWindow(CLASSname, WINDOWname,
 		WS_OVERLAPPEDWINDOW,
 		//		CW_USEDEFAULT, 0, CW_USEDEFAULT, 0,
@@ -111,28 +117,28 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		goto Exit;
 	}
 
-	// DirectShowÉtÉBÉãÉ^ÇÃèÄîı
+	// DirectShow„Éï„Ç£„É´„Çø„ÅÆÊ∫ñÂÇô
 
 	hr = OpenFile(hWnd, VIDEOpass);
 	if (FAILED(hr)) {
 
 		goto Exit;
 	}
-
+	hr = g.pEvent->SetNotifyWindow((OAHWND)hWnd, WM_DIRECTSHOWMESSAGE, (LPARAM)NULL);//IMediaEventEx„ÅÆÊ∫ñÂÇô
 	ShowWindow(hWnd, nCmdShow);
 
-	// ìÆâÊçƒê∂
+	// ÂãïÁîªÂÜçÁîü
 	hr = g.pControl->Run();
 	g.nPlay = 1;
 
-	// ÉÅÉbÉZÅ[ÉWÉãÅ[Év
+	// „É°„ÉÉ„Çª„Éº„Ç∏„É´„Éº„Éó
 	do {
 		Sleep(1);
 		if (g.Cusor >= 0) {
 			if (g.Cusor_time > 0) {
 				g.Cusor_time--;
 			}
-			else{//(g.Cusor_time == 0)Ç∆ìØà”ã` 
+			else{//(g.Cusor_time == 0)„Å®ÂêåÊÑèÁæ© 
 				g.Cusor = ShowCursor(false);
 			}
 		}
@@ -140,15 +146,32 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
+		do{
+			//„Ç§„Éô„É≥„Éà„ÇíÂèñÂæó
+			hr = g.pEvent->GetEvent(&lEventCode, &lEvParam1, &lEvParam2, 0);
+			if (hr == S_OK) {
+				//ÂÜçÁîüÁµÇ‰∫Ü„Åß„ÅÇ„Å£„Åü„Å®„Åç„Éï„É©„Ç∞„ÇíÁ´ã„Å¶„Çã
+				if (lEventCode == EC_COMPLETE) bIsComplete = TRUE;
+
+				//„Ç§„Éô„É≥„Éà„ÇíÂâäÈô§
+				g.pEvent->FreeEventParams(lEventCode, lEvParam1, lEvParam2);
+			}
+		} while (hr == S_OK);
+		if (bIsComplete) {
+			g.pControl->Stop();
+			SendMessage(hWnd, WM_CLOSE, 0, 0);
+		}
 	} while (msg.message != WM_QUIT);
 
-	// ìÆâÊí‚é~
+	// ÂãïÁîªÂÅúÊ≠¢
 	hr = g.pControl->Stop();
 	Sleep(1000);
 Exit:
-	SAFE_RELEASE(g.pCGB2);
+	SAFE_RELEASE(g.pSeek);
 	SAFE_RELEASE(g.pEvr);
+	SAFE_RELEASE(g.pEvent);
 	SAFE_RELEASE(g.pVideo);
+	SAFE_RELEASE(g.pCGB2);
 	SAFE_RELEASE(g.pControl);
 	SAFE_RELEASE(g.pGraph);
 	CoUninitialize();
@@ -158,13 +181,11 @@ Exit:
 //------------------------------------------------------------------------------
 HRESULT OpenFile(HWND hWnd, LPCWSTR pszFile)
 {
-	// ÉtÉBÉãÉ^ÉOÉâÉtÇÃçÏê¨
-	HRESULT hr = CoCreateInstance(CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER,
-		IID_PPV_ARGS(&g.pGraph));
+	// „Éï„Ç£„É´„Çø„Ç∞„É©„Éï„ÅÆ‰ΩúÊàê
+	HRESULT hr = CoCreateInstance(CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER,IID_PPV_ARGS(&g.pGraph));
 
-	// ÉÅÉfÉBÉAÉRÉìÉgÉçÅ[ÉãÉCÉìÉ^Å[ÉtÉFÉCÉXÇÃéÊìæ
+	// „É°„Éá„Ç£„Ç¢„Ç≥„É≥„Éà„É≠„Éº„É´„Ç§„É≥„Çø„Éº„Éï„Çß„Ç§„Çπ„ÅÆÂèñÂæó
 	if (SUCCEEDED(hr)) {
-
 		hr = g.pGraph->QueryInterface(IID_PPV_ARGS(&g.pControl));
 	}
 
@@ -172,53 +193,169 @@ HRESULT OpenFile(HWND hWnd, LPCWSTR pszFile)
 		hr = CoCreateInstance(CLSID_CaptureGraphBuilder2, NULL, CLSCTX_INPROC_SERVER, IID_ICaptureGraphBuilder2, (void **)&g.pCGB2);
 	}
 
-	// ÉrÉfÉIÇÃçÏê¨
+	if (SUCCEEDED(hr)) {
+		hr = g.pGraph->QueryInterface(IID_IMediaSeeking, (void**)&g.pSeek);
+	}
+
+	if (SUCCEEDED(hr)) {
+		hr = g.pGraph->QueryInterface(IID_IMediaEventEx, (void**)&g.pEvent);
+	}
+
+	if (SUCCEEDED(hr)) {
+		hr = g.pCGB2->SetFiltergraph(g.pGraph);//„Ç≠„É£„Éó„ÉÅ„É£ „Ç∞„É©„Éï „Éì„É´„ÉÄ„Åå‰Ωø„ÅÜ„Éï„Ç£„É´„Çø „Ç∞„É©„Éï„ÇíÊåáÂÆö„Åô„Çã„ÄÇ
+	}
+
+	// „Éì„Éá„Ç™„ÅÆ‰ΩúÊàê
 	if (SUCCEEDED(hr)) {
 
 		hr = InitEvr(hWnd);
 	}
 
-	// ÉOÉâÉtÇçÏê¨Ç∑ÇÈ
 	if (SUCCEEDED(hr)) {
-		//hr = g.pGraph->RenderFile(pszFile, NULL);
+		//hr = g.pCGB2->RenderStream(0, 0, g.pSource, 0, g.pEvr);
+
 		IBaseFilter *pSrc = 0, *pDec = 0, *pRawfilter = 0, *pVSFilter = 0;
 		IPin *pSubtitle = 0;
-		GUID CLSID_LAVVideo, CLSID_ffdshow_raw, CLSID_VSFilter, CLSID_MEDIATYPE_Subtitle;
-		hr = g.pGraph->AddSourceFilter(pszFile, pszFile, &pSrc);
-		hr = g.pCGB2->SetFiltergraph(g.pGraph);//ÉLÉÉÉvÉ`ÉÉ ÉOÉâÉt ÉrÉãÉ_Ç™égÇ§ÉtÉBÉãÉ^ ÉOÉâÉtÇéwíËÇ∑ÇÈÅB(ñ≥Ç≠ÇƒÇ‡é©ìÆçÏê¨Ç≥ÇÍÇÈ)
+		GUID CLSID_LAVVideo, CLSID_ffdshow_raw, CLSID_VSFilter, CLSID_MEDIATYPE_Subtitle, CLSID_ffdshow_Video;
+		HRESULT Connect;//Directshow„ÅÆ„Éï„Ç£„É´„Çø„ÅÆÊé•Á∂öÂÆâÂê¶(ÊúÄÁµÇÁöÑ„Å´„ÅØÂ≠óÂπï„ÅÆÊé•Á∂öÂÆâÂê¶„Å´‰Ωø„Çè„Çå„Çã)
 
-		GuidFromString(&CLSID_LAVVideo, LAVVideo);
-		hr = AddFilter(g.pGraph, CLSID_LAVVideo, L"LAV Video Decoder", &pDec);
-		GuidFromString(&CLSID_ffdshow_raw, ffdshow_Raw);
-		hr = AddFilter(g.pGraph, CLSID_ffdshow_raw, L"ffdshow raw video filter", &pRawfilter);
-		GuidFromString(&CLSID_VSFilter, VSFilter);
-		hr = AddFilter(g.pGraph, CLSID_VSFilter, L"VSFilter", &pVSFilter);
-
-		hr = g.pCGB2->RenderStream(0, 0, pSrc, 0, pDec);
-		hr = g.pCGB2->RenderStream(0, 0, pDec, 0, pRawfilter);
-		hr = g.pCGB2->RenderStream(0, 0, pRawfilter, 0, pVSFilter);
-		hr = g.pCGB2->RenderStream(0, 0, pVSFilter, 0, g.pEvr);
-
-		//ÉIÅ[ÉfÉBÉIÇÃê⁄ë±
-		hr = g.pCGB2->RenderStream(0, &MEDIATYPE_Audio, pSrc, 0, 0);
-
-
-		//éöñãÇÃê⁄ë±
-		GuidFromString(&CLSID_MEDIATYPE_Subtitle, MEDIATYPE_Subtitle);
-		
-		HRESULT hr_SubTitle = g.pCGB2->FindPin(pSrc,
-			PINDIR_OUTPUT,
-			NULL,
-			&CLSID_MEDIATYPE_Subtitle,
-			true,
-			NULL,
-			&pSubtitle
-		);
-
-		if(SUCCEEDED(hr_SubTitle)){
-			hr = g.pCGB2->RenderStream(0, &CLSID_MEDIATYPE_Subtitle, pSrc, 0, pVSFilter);
+		try {
+			GuidFromString(&CLSID_MEDIATYPE_Subtitle, MEDIATYPE_Subtitle);
+			hr = g.pGraph->AddSourceFilter(pszFile, pszFile, &pSrc);
+			if (SUCCEEDED(hr)) {
+				GuidFromString(&CLSID_LAVVideo, LAV_Video);
+				Connect = AddFilter(g.pGraph, CLSID_LAVVideo, L"LAV Video Decoder", &pDec);
+				if (SUCCEEDED(Connect)) {
+					hr = g.pCGB2->RenderStream(0, 0, pSrc, 0, pDec);
+					if (FAILED(hr)) {
+						throw "LAV_Video_Decoder didn't Connect";
+					}
+					GuidFromString(&CLSID_ffdshow_raw, ffdshow_Raw);
+					Connect = AddFilter(g.pGraph, CLSID_ffdshow_raw, L"ffdshow raw video filter", &pRawfilter);
+					if (SUCCEEDED(Connect)) {
+						hr = g.pCGB2->RenderStream(0, 0, pDec, 0, pRawfilter);
+						if (FAILED(hr)) {
+							throw "ffdshow_raw_video_filter didn't Connect";
+						}
+						GuidFromString(&CLSID_VSFilter, VSFilter);
+						Connect = AddFilter(g.pGraph, CLSID_VSFilter, L"VSFilter", &pVSFilter);
+						if (SUCCEEDED(Connect)) {
+							//Full installed.
+							hr = g.pCGB2->RenderStream(0, 0, pRawfilter, 0, pVSFilter);
+							if (FAILED(hr)) {
+								throw "VSFilter didn't Connect";
+							}
+							hr = g.pCGB2->RenderStream(0, 0, pVSFilter, 0, g.pEvr);
+							if (FAILED(hr)) {
+								throw "Enhaced_Video_Renderer didn't Connect";
+							}
+							HRESULT hr_SubTitle = g.pCGB2->FindPin(pSrc,
+								PINDIR_OUTPUT,
+								NULL,
+								&CLSID_MEDIATYPE_Subtitle,
+								true,
+								NULL,
+								&pSubtitle
+							);//Â≠óÂπï„ÅÆ„Éî„É≥„ÇíÊé¢„Åô
+							if (SUCCEEDED(hr_SubTitle)) {
+								Connect = g.pCGB2->RenderStream(0, &CLSID_MEDIATYPE_Subtitle, pSrc, 0, pVSFilter);//Â≠óÂπï„ÅÆÊé•Á∂ö
+							}
+						}
+						else {
+							//VSFilter is not installed.
+							hr = g.pCGB2->RenderStream(0, 0, pRawfilter, 0, g.pEvr);
+							HRESULT hr_SubTitle = g.pCGB2->FindPin(pSrc,
+								PINDIR_OUTPUT,
+								NULL,
+								&CLSID_MEDIATYPE_Subtitle,
+								true,
+								NULL,
+								&pSubtitle
+							);//Â≠óÂπï„ÅÆ„Éî„É≥„ÇíÊé¢„Åô
+							if (SUCCEEDED(hr_SubTitle)) {
+								Connect = g.pCGB2->RenderStream(0, &CLSID_MEDIATYPE_Subtitle, pSrc, 0, pRawfilter);//Â≠óÂπï„ÅÆÊé•Á∂ö
+							}
+						}
+					}
+					else {
+						//LAV_Filters is installed only.
+						hr = g.pCGB2->RenderStream(0, 0, pDec, 0, g.pEvr);
+						if (FAILED(hr)) {
+							throw "Enhaced_Video_Renderer didn't Connect";
+						}
+					}
+				}
+				else {
+					//LAV_Video_Decorder„Åå„Å™„ÅÑ„Å®„ÅÑ„ÅÜ„Åì„Å®„Å™„ÅÆ„Åß„ÄÅ‰ª£Ê°à„Åßffdshow„Å´Êé•Á∂ö
+					GuidFromString(&CLSID_ffdshow_Video, ffdshow_Video);
+					Connect = AddFilter(g.pGraph, CLSID_ffdshow_Video, L"ffdshow Decoder", &pDec);
+					if (SUCCEEDED(Connect)) {
+						hr = g.pCGB2->RenderStream(0, 0, pSrc, 0, pDec);
+						if (FAILED(hr)) {
+							throw "ffdshow Decoder didn't Connect";
+						}
+						GuidFromString(&CLSID_VSFilter, VSFilter);
+						Connect = AddFilter(g.pGraph, CLSID_VSFilter, L"VSFilter", &pVSFilter);
+						if (SUCCEEDED(Connect)) {
+							//LAV_Filter is not installed.
+							hr = g.pCGB2->RenderStream(0, 0, pDec, 0, pVSFilter);
+							if (FAILED(hr)) {
+								throw "VSFilter didn't Connect";
+							}
+							hr = g.pCGB2->RenderStream(0, 0, pVSFilter, 0, g.pEvr);
+							if (FAILED(hr)) {
+								throw "Enhaced_Video_Renderer didn't Connect";
+							}
+							HRESULT hr_SubTitle = g.pCGB2->FindPin(pSrc,
+								PINDIR_OUTPUT,
+								NULL,
+								&CLSID_MEDIATYPE_Subtitle,
+								true,
+								NULL,
+								&pSubtitle
+							);//Â≠óÂπï„ÅÆ„Éî„É≥„ÇíÊé¢„Åô
+							if (SUCCEEDED(hr_SubTitle)) {
+								Connect = g.pCGB2->RenderStream(0, &CLSID_MEDIATYPE_Subtitle, pSrc, 0, pVSFilter);//Â≠óÂπï„ÅÆÊé•Á∂ö
+							}
+						}
+						else {
+							//ffdshow is installed only. 
+							hr = g.pCGB2->RenderStream(0, 0, pDec, 0, g.pEvr);
+							if (FAILED(hr)) {
+								throw "Enhaced_Video_Renderer didn't Connect";
+							}
+							HRESULT hr_SubTitle = g.pCGB2->FindPin(pSrc,
+								PINDIR_OUTPUT,
+								NULL,
+								&CLSID_MEDIATYPE_Subtitle,
+								true,
+								NULL,
+								&pSubtitle
+							);//Â≠óÂπï„ÅÆ„Éî„É≥„ÇíÊé¢„Åô
+							if (SUCCEEDED(hr_SubTitle)) {
+								Connect = g.pCGB2->RenderStream(0, &CLSID_MEDIATYPE_Subtitle, pSrc, 0, pDec);//Â≠óÂπï„ÅÆÊé•Á∂ö
+							}
+						}
+					}
+					else {
+						//LAV_Filters or ffdshow are not installed.
+						std::cout << "foo_video[Warning]:Your PC is not install LAV_Filters or ffdshow. You should install LAV_Filters or ffdshow";
+						hr = g.pCGB2->RenderStream(0, 0, pSrc, 0, g.pEvr);
+					}
+				}
+			}
+			else {
+				throw "AddSorceFilter Failed";
+			}
+		}
+		catch (char *str) {
+			std::cout << "foo_video[Fatal_Error]:" << str;
+			std::cout << "foo_video[Error_Info]: Reason:" << hr;
 		}
 
+		//„Ç™„Éº„Éá„Ç£„Ç™„ÅÆÊé•Á∂ö
+		hr = g.pCGB2->RenderStream(0, &MEDIATYPE_Audio, pSrc, 0, 0);
+		hr = 0;
 		SAFE_RELEASE(pSubtitle);
 		SAFE_RELEASE(pSrc);
 		SAFE_RELEASE(pDec);
@@ -226,15 +363,15 @@ HRESULT OpenFile(HWND hWnd, LPCWSTR pszFile)
 		SAFE_RELEASE(pVSFilter);
 	}
 
-	// ï`âÊóÃàÊÇÃê›íË
+	// ÊèèÁîªÈ†òÂüü„ÅÆË®≠ÂÆö
 	if (SUCCEEDED(hr)) {
-
 		g.pVideo->GetNativeVideoSize(&g.size, NULL);
 	}
-	if (SUCCEEDED(hr)) {
 
+	if (SUCCEEDED(hr)) {
 		hr = SetVideoPos(hWnd, 1);
 	}
+
 	return hr;
 }
 
@@ -242,11 +379,11 @@ HRESULT OpenFile(HWND hWnd, LPCWSTR pszFile)
 HRESULT InitEvr(HWND hWnd)
 {
 
-	// EVRÇÃçÏê¨
+	// EVR„ÅÆ‰ΩúÊàê
 	HRESULT hr = CoCreateInstance(CLSID_EnhancedVideoRenderer, NULL, CLSCTX_INPROC_SERVER,
 		IID_PPV_ARGS(&g.pEvr));
 
-	// ÉtÉBÉãÉ^ÉOÉâÉtÇ…EVRÇí«â¡
+	// „Éï„Ç£„É´„Çø„Ç∞„É©„Éï„Å´EVR„ÇíËøΩÂä†
 	if (SUCCEEDED(hr)) {
 		hr = g.pGraph->AddFilter(g.pEvr, L"EVR");
 	}
@@ -315,7 +452,7 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		break;	
 	case WM_LBUTTONDOWN:
 		if(!(g.FullScreen_Flag)){
-			PostMessage(hWnd, WM_NCLBUTTONDOWN, HTCAPTION, lParam);//ÉNÉâÉCÉAÉìÉgÇÃè„Ç≈ÉEÉBÉìÉhÉEÇìÆÇ©Ç∑ÅB
+			PostMessage(hWnd, WM_NCLBUTTONDOWN, HTCAPTION, lParam);//„ÇØ„É©„Ç§„Ç¢„É≥„Éà„ÅÆ‰∏ä„Åß„Ç¶„Ç£„É≥„Éâ„Ç¶„ÇíÂãï„Åã„Åô„ÄÇ
 		}
 		break;
 	case WM_LBUTTONDBLCLK:
@@ -335,6 +472,9 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		while (g.Cusor < 0) {
 			g.Cusor=ShowCursor(true);
 		}
+		break;
+	case WM_DIRECTSHOWMESSAGE:
+		//g.pControl->Stop();
 		break;
 	default:
 		return DefWindowProc(hWnd, uMsg, wParam, lParam);
